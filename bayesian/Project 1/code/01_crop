@@ -1,0 +1,152 @@
+# libraries --------------------------------------------------------------------
+library(cmdstanr)
+library(ggplot2)
+library(ggdist)
+library(posterior)
+library(bayesplot)
+library(mcmcse)
+
+# modelling and data prep ------------------------------------------------------
+# compile the model
+model <- cmdstan_model("model/normal.stan")
+
+# prepare the data
+data <- read.csv("data/01_crop.csv")
+# group markers
+g <- data$fertilizer
+
+# prepare input data
+stan_data <- list(n = nrow(data), y = data$yield, g = g)
+
+
+# fit
+fit <- model$sample(
+  data = stan_data,
+  seed = 1
+)
+
+# diagnostics ------------------------------------------------------------------
+# traceplot > none of par chained off and went somewhere we dont want us to be
+mcmc_trace(fit$draws()) 
+
+# summary
+fit$summary() 
+
+# we can observe that our rhat for all means equal 1, 
+# whereas both ess appear to be highly above average, meaning that
+# we can continue with our analysis.
+
+
+# analysis ---------------------------------------------------------------------
+# convert samples to data frame
+df <- as_draws_df(fit$draws())
+
+# compare mu x 3
+ggplot(data = df) +
+  geom_density(aes(x = mu1, fill = "#510b51"), alpha = 0.6) +
+  geom_density(aes(x = mu2, fill = "steelblue1"), alpha = 0.6) +
+  geom_density(aes(x = mu3, fill = "yellow"), alpha = 0.6) +
+  xlab("Mean") + ylab("Density") +
+  ggtitle("Distribution of Means") +
+  scale_fill_manual(values = c("#510b51", "steelblue1", "yellow"),
+                    name = "Legend",
+                    labels = c("Fertilizer 1", "Fertilizer 2", "Fertilizer 3")) +
+  theme_classic() +
+  theme(legend.position = c(0.85, 0.85))
+
+# compare mu2 with mu3
+ggplot(data = df) +
+  geom_density(aes(x = mu2), color = NA, fill = "skyblue", alpha = 0.5) +
+  geom_density(aes(x = mu3), color = NA, fill = "tomato", alpha = 0.5) +
+  xlab("mu")
+
+
+######## QUESTION 1
+
+######## FERTILIZER 1
+# probability that mu1 gives better average yield that mu2?
+# if diff < 0: mu1 is larger than mu2
+mcse(df$diff1 < 0)
+mcse(df$mu1 > df$mu2)
+
+mcse(df$diff3 < 0)
+mcse(df$mu1 > df$mu3)
+
+# The likelihood of fertilizer 1 outperforming fertilizer 2 in terms of average 
+# yield is 86 % with an error of +/- 0.6 %. In comparison with fertilizier 3, the same
+# probability amounts to 2 % with a standard error of +/- 0.07, implying a negligible
+# difference between them. 
+
+
+######## FERTILIZIER 2
+
+mcse(df$diff1 > 0)
+mcse(df$mu2 > df$mu1)
+
+mcse(df$diff2 < 0)
+mcse(df$mu2 > df$mu3)
+
+# Fertilizer 2 has an 86 % chance of producing a higher average yield than fertilizer 1, 
+# with standard error of +/- 0.6 %. On the other hand, when compared to fertilizer 3, 
+# the chance of fertilizer 2 performing better drops to a mere 1%, with a margin of error of +/- 0.2 %, 
+# indicating almost no difference between the two.  
+
+######### FERTILIZER 3 
+
+mcse(df$diff2 > 0)
+mcse(df$mu3 > df$mu2)
+
+mcse(df$diff3 > 0)
+mcse(df$mu3 > df$mu1)
+
+# Lastly, fertilizer 3 is 99 % more likely to provide larger average yield 
+# than fertilizer 2, with an error range of +/- 0.2%. Similarly, when compared 
+# to fertilizer 1, the likelihood of fertilizer 3 providing a better crop yield is 
+# nearly 100 %, indicating a substantial difference between these two.
+
+
+######## QUESTION 2
+
+mcse(df$mu1 > df$mu2 & df$mu1 > df$mu3)
+
+mcse(df$mu2 > df$mu1 & df$mu2 > df$mu3)
+
+mcse(df$mu3 > df$mu1 & df$mu3 > df$mu2)
+
+# Fertilizer 1 has an almost zero probability of providing the highest average yield.
+# In comparison, there is a 1 % chance that fertiliizer 2 could yield the maximum average crop.
+# Meanwhile, fertilizer 3 has an almost 99 % probability od producing the largest crop yield,
+# with a standard error of +/- 0.2. This suggest that the fertilizer 3 is the superios 
+# to other two fertilizers in obtaining the maximum yield.
+
+
+######### QUESTION 3 > next year
+
+# number of yields
+n <- 100000
+
+yield_wheat1 <- rnorm(n, mean = df$mu1, sd = df$sigma)
+yield_wheat2 <- rnorm(n, mean = df$mu2, sd = df$sigma)
+yield_wheat3 <- rnorm (n, mean = df$mu3, sd = df$sigma)
+
+mcse(yield_wheat1 > yield_wheat2 & yield_wheat1 > yield_wheat3)
+mcse(yield_wheat2 > yield_wheat1 & yield_wheat2 > yield_wheat3)
+mcse(yield_wheat3 > yield_wheat1 & yield_wheat3 > yield_wheat2)
+
+# It was found that fertilizer 3 has the highest probability of producing the largest yield 
+# in the next year, with a probability estimate of .65 and standard error of .002. 
+# Fertilizer 2 had a lower probability estimate of .21, with standard error of .001, whereas 
+# fertilizer 1 had the lowest probability estimate of .14, with standard error of .001.
+
+# q95
+q95 <- quantile(df$diff1, 0.95)
+
+# plot diff
+ggplot(data = df) +
+  geom_density(aes(x = diff1), color = NA, fill = "skyblue", alpha = 0.75) +
+  xlab("difference") +
+  geom_vline(xintercept = q95, linetype = "dashed",
+             color = "grey75", linewidth = 1.5)
+
+
+
