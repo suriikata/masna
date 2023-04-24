@@ -1,0 +1,28 @@
+QUESTION 6
+
+Task 1. Upon examining the histogram of week nights variable, we observe a right-skewed distribution,
+indicating non-normal data. Hence, the majority of the data is concentrated in the first third
+of x-axis, indicating the presence of outliers, that strongly influence this distribution type.
+The x-axis ranges from 0 to 15, with the lowest number of stays being 0 and the highest being 17. 
+The figure's peak is at 2, indicating that on average, guests stayed for 2 nights most frequently, 
+followed by 1 night of stay. The density plot reveals harmonic type of distribution, which is due
+to the fact that this variable is a discrete type rather than continous. 
+
+Task 3. Firstly, we needed to determine if the lead time variable had a normal distribution within
+each room and meal plan type. We accomplished this by visually examining the density plots.  
+The first density plot in the upper left corner shows, that the distribution of each 
+room type is skewed heavily to the right, indicating a non-parametric distribution.
+In the case of the meal plan, most groups have a flat distribution with more data values on the tails,
+except for the groups 3, which has a pointy distribution with skewness to the right, resulting in the overall non-parametric distribution. Secondly, the density pllot on the right displays the room type
+groups distrbutions in relation to the average room price. From this we can observe that group
+3 and 7 have flat distributions, while group 2 has a peaked one, indicating low and high curtosis,
+respectively. Although room type 6 appears to be closest to the normal distribution,
+the distributions of the majority of the room type still appear to be non-normally distributed.
+In the previous task, we discovered the abnormal distribution of group 2 and 3 in the case of
+meal plans. Considering that both numerical variables are not normally distributed within
+each type of rooms and meal plans, we used the Kruskal-Wallis test in order to compare the medians
+of these groups. The output in both cases show that the p-value is less than significance level
+(p = 0.000), meaning, that we reject the null hypothesis stating that the medians of lead time and
+average price per room are equal across all type of rooms and meals. Thus, we conclude, that there is
+a significant difference in lead time and average price per room across the room types and meal
+plans. 
