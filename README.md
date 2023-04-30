@@ -1,4 +1,4 @@
-# Final Projects: Nonparametrics, Bayesian and Multivariate Analysis
+# Uni Final Projects
 
 This repository contains the final projects from the nonparametrics, Bayesian, and multivariate analysis courses at HSE University. 
 Each project is contained in its own folder, with the project report and any associated code or data files.
